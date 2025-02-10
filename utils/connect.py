@@ -1,3 +1,6 @@
+import json
+import signal
+import pathlib
 import asyncio
 import websockets
 from concurrent.futures import ThreadPoolExecutor
@@ -6,32 +9,36 @@ from concurrent.futures import ThreadPoolExecutor
 class ApitServer:
 
     def __init__(self, host: str = "localhost", port: str = 8080) -> None:
-        self.client_connections = set()         # Store client connections
-        self._host = host                       # Store host data
-        self._port = port                       # Store port data
-        self._server_task = None                # To store the WebSocket server task
-        self.server = None                      # Store WebSocket Server
-        self.messages = asyncio.Queue()         # Store messages from clients
+        self.client_connections = set()     # Store client connections
+        self._host = host                   # Store host data
+        self._port = port                   # Store port data
+        self._server_task = None            # To store the WebSocket server task
+        self.server = None                  # Store WebSocket Server
+        self.messages = asyncio.Queue()
     
     async def send_message(self, msg) -> None:
         """Send a message to all connected clients."""
         if self.client_connections:
             try:
-                await asyncio.gather(*[websocket.send(msg) 
+                await asyncio.gather(*[websocket.send(json.dumps(msg)) 
                                        for websocket in self.client_connections])
             except websockets.exceptions.ConnectionClosedOK:
                 self.client_connections.clear()
                 print("connection closed")
 
     async def fetch_message(self) -> dict:
-        """Returns messages from the Queue"""
+        """"""
         return await self.messages.get()
 
     async def handle_connection(self, websocket) -> None:
         """Handle a new WebSocket connection"""
         self.client_connections.add(websocket)
+        print(f"New client connected. Total clients: {len(self.client_connections)}")
+
         try:
             async for msg in websocket:
+                # print("Message Recieved: {}".format(msg))
+                # await websocket.send(f"Echo: {msg}")
                 await self.messages.put(msg)
         except websockets.ConnectionClosed:
             print("Client disconnected")
