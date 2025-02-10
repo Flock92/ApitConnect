@@ -16,12 +16,12 @@ class CFDRequest:
         """"""
         self._mode = mode
 
-    def get_summary(self) -> json:
+    def get_summary(self) -> dict:
         """Get account summary"""
         request = {"command":"get_summary", "data":"[]", "mode": self._mode}
         return request
 
-    def get_account(self) -> json:
+    def get_account(self) -> dict:
         """Get account """
         request = {"command":"get_account", "data": None, "mode": self._mode}
         return request
