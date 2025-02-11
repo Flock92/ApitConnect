@@ -37,10 +37,13 @@ class ApitServer:
 
         try:
             async for msg in websocket:
+                print(msg)
+                await self.messages.put(msg)
                 # print("Message Recieved: {}".format(msg))
                 # await websocket.send(f"Echo: {msg}")
-                await self.messages.put(msg)
+                        
         except websockets.ConnectionClosed:
+            self.client_connections.clear()
             print("Client disconnected")
         except websockets.InvalidMessage:
             print("invalid message")
