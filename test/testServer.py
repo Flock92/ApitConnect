@@ -24,16 +24,22 @@ async def trade_loop():
 
     print("running trading loop")
     while True:
-        
-        await asyncio.sleep(1)
-        trade = {"notify":"NONE","quantity":-400, "limitDistance":0.012, 
-                 "stopDistance":0.012, "instrumentCode":"GBPUSD","targetPrice":1.2}
-        
-        trade_task = {"instruction":"trade", "command":"open_postion", "data":trade}
-        await SERVER_TASK.put(trade_task)
 
-        if APIT_SERVER.server == None:
-            break
+        if len(APIT_SERVER.client_connections) > 0:
+
+            await asyncio.sleep(0.1)
+
+            if APIT_SERVER.server == None:
+                break
+
+            trade = {"notify":"NONE","quantity":-400, "limitDistance":0.012, 
+                     "stopDistance":0.012, "instrumentCode":"GBPUSD","targetPrice":1.2}
+
+            trade_task = {"instruction":"trade", "command":"open_position", "mode": "demo", "data": trade}
+            await SERVER_TASK.put(trade_task)
+            
+        else:
+            await asyncio.sleep(1)
 
 # CREATE THE MAIN LOOP 
 async def main():
@@ -69,7 +75,7 @@ async def main():
                 for i in range(SERVER_TASK.qsize()):
                     
                     task = await SERVER_TASK.get() # fetch task from the task queue
-                
+
                     match task["instruction"]:
 
                         case "trade":
