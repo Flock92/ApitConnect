@@ -41,6 +41,10 @@ async def trade_loop():
         else:
             await asyncio.sleep(1)
 
+            if APIT_SERVER.server == None:
+                print("closing trading loop!")
+                break
+
 # CREATE THE MAIN LOOP 
 async def main():
 
@@ -70,9 +74,13 @@ async def main():
                 print(f"Message Recieved: {response}")
 
             # CHECK FOR ANY LOCAL TASK TO COMPLETE
-            if SERVER_TASK.empty() != True:
+            if SERVER_TASK.empty() != True and len(APIT_SERVER.client_connections) != 0:
 
                 for i in range(SERVER_TASK.qsize()):
+
+                    if APIT_SERVER.client_connections == 0:
+                        print("connection dropped: task proccess stopped")
+                        break
                     
                     task = await SERVER_TASK.get() # fetch task from the task queue
 
@@ -80,15 +88,19 @@ async def main():
 
                         case "trade":
                             await send_msg(task)
+                            # print("sending order")
+                            pass
 
                         case "end_trading":
                             await APIT_SERVER.stop_server()
 
                         case _:
-                            pass
+                            pass   
 
     except asyncio.CancelledError as em:
         print(f"MainLoop Error: {em}")
+
+    await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
