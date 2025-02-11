@@ -24,9 +24,11 @@ async def trade_loop():
 
     print("running trading loop")
     while True:
-
-        await asyncio.sleep(5)
-        trade = {"notify":"NONE","quantity":-400, "limitDistance":0.012, "stopDistance":0.012, "instrumentCode":"GBPUSD","targetPrice":1.2}
+        
+        await asyncio.sleep(1)
+        trade = {"notify":"NONE","quantity":-400, "limitDistance":0.012, 
+                 "stopDistance":0.012, "instrumentCode":"GBPUSD","targetPrice":1.2}
+        
         trade_task = {"instruction":"trade", "command":"open_postion", "data":trade}
         await SERVER_TASK.put(trade_task)
 
@@ -60,25 +62,24 @@ async def main():
             if APIT_SERVER.messages.empty() != True:
                 response = await APIT_SERVER.fetch_message()
                 print(f"Message Recieved: {response}")
-        
-            # START TRADING LOOP
-            await trade_loop()
 
             # CHECK FOR ANY LOCAL TASK TO COMPLETE
             if SERVER_TASK.empty() != True:
-                
-                task = await SERVER_TASK.get() # fetch task from the task queue
-                
-                match task["instruction"]:
+
+                for i in range(SERVER_TASK.qsize()):
                     
-                    case "trade":
-                        await send_msg(task)
+                    task = await SERVER_TASK.get() # fetch task from the task queue
+                
+                    match task["instruction"]:
 
-                    case "end_trading":
-                        await APIT_SERVER.stop_server()
+                        case "trade":
+                            await send_msg(task)
 
-                    case _:
-                        pass
+                        case "end_trading":
+                            await APIT_SERVER.stop_server()
+
+                        case _:
+                            pass
 
     except asyncio.CancelledError as em:
         print(f"MainLoop Error: {em}")
@@ -88,9 +89,5 @@ if __name__ == "__main__":
 
     # CREATE AND START EVENT LOOP
     event_loop = asyncio.new_event_loop()
+    event_loop.create_task(trade_loop())
     event_loop.run_until_complete(main())
-
-
-
-    
-
